@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 
+
 Route::get('/', function () {
-    return view('welcome');
+    return Redirect::to('/status');
+});
+
+Route::get('/status', function () {
+    $list = Cache::get('api_status_list', []);
+    return view('status', ['status_list' => $list]);
 });
