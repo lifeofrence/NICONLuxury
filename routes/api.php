@@ -19,13 +19,14 @@ Route::get('/bookings/availability', [BookingController::class, 'availability'])
 Route::post('/bookings', [BookingController::class, 'store']);
 Route::put('/bookings/cancel/{id}', [BookingController::class, 'cancelled'])->whereNumber('id');
 Route::post('/payments/initiate', [PaymentController::class, 'initiate']);
-Route::match(['get','post'], '/payments/confirm', [PaymentController::class, 'confirm']);
+Route::match(['get', 'post'], '/payments/confirm', [PaymentController::class, 'confirm']);
 Route::post('/payments/webhook', [PaymentController::class, 'webhook']);
 
 // Admin routes (auth:sanctum + role:admin)
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
-     Route::get('/rooms/list', [RoomTypeController::class, 'listRoom']);
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::get('/rooms/list', [RoomTypeController::class, 'listRoom']);
     Route::post('/rooms/add', [RoomTypeController::class, 'store']);
     Route::put('/rooms/{id}', [RoomTypeController::class, 'updateRoomType'])->whereNumber('id');
 
@@ -35,7 +36,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::delete('/admin/physical-rooms/{id}', [RoomController::class, 'destroy'])->whereNumber('id');
 
     // bookings admin
-    Route::get('/admin/bookings', [BookingController::class, 'index']); 
+    Route::get('/admin/bookings', [BookingController::class, 'index']);
     Route::get('/admin/bookings/{id}', [BookingController::class, 'show'])->whereNumber('id');
     Route::put('/admin/bookings/{id}', [BookingController::class, 'update'])->whereNumber('id');
 
@@ -44,7 +45,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     // room type images
     Route::post('/admin/room-types/{roomTypeId}/images', [RoomTypeImageController::class, 'store'])->whereNumber('roomTypeId');
-    Route::match(['put','post'], '/admin/room-types/{roomTypeId}/images/{imageId}', [RoomTypeImageController::class, 'update'])
+    Route::match(['put', 'post'], '/admin/room-types/{roomTypeId}/images/{imageId}', [RoomTypeImageController::class, 'update'])
         ->whereNumber('roomTypeId')
         ->whereNumber('imageId');
     Route::delete('/admin/room-types/{roomTypeId}/images/{imageId}', [RoomTypeImageController::class, 'destroy'])->whereNumber('roomTypeId')->whereNumber('imageId');
