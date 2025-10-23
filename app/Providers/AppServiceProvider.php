@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Attach API request logger to the 'api' middleware group
+        $router = $this->app['router'];
+        $router->pushMiddlewareToGroup('api', \App\Http\Middleware\ApiStatusLogger::class);
     }
 }
