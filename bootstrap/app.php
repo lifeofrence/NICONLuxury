@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth' => \App\Http\Middleware\Authenticate::class,
             'role' => \App\Http\Middleware\CheckAdminRole::class,
         ]);
+
+        // Ensure Authorization header reaches Sanctum even if server alters it
+        $middleware->appendToGroup('api', \App\Http\Middleware\NormalizeAuthorization::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Return detailed JSON for unauthenticated API requests
