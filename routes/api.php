@@ -8,6 +8,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\RoomTypeImageController;
+use Illuminate\Http\Request;
 
 // Debug route - remove after testing
 Route::get('/debug/headers', function (Request $request) {
