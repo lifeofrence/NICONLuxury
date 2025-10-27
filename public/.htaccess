@@ -5,9 +5,16 @@
 
     RewriteEngine On
 
-    # Handle Authorization Header
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    # Handle Authorization Header - Multiple methods for compatibility
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+    
+    # Alternative Authorization header handling
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
+    # Set environment variable for Authorization header
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
     # Handle X-XSRF-Token Header
     RewriteCond %{HTTP:x-xsrf-token} .

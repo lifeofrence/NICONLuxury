@@ -17,7 +17,10 @@ class NormalizeAuthorization
                 ?? null;
 
             // Alternate headers clients might send
-            $xAuth = $request->header('X-Authorization') ?? $request->header('X-Auth-Token');
+            $xAuth = $request->header('X-Authorization')
+                ?? $request->header('X-Auth-Token')
+                ?? $request->header('X-API-Key')
+                ?? $request->header('Bearer-Token');
 
             // Token passed via query/body (last resort)
             $tokenParam = $request->query('token') ?? $request->input('token');
@@ -27,11 +30,11 @@ class NormalizeAuthorization
                 $request->headers->set('Authorization', $serverAuth);
             } elseif ($xAuth) {
                 // Normalize to Bearer format if needed
-                $authHeader = str_starts_with($xAuth, 'Bearer ') ? $xAuth : ('Bearer '.$xAuth);
+                $authHeader = str_starts_with($xAuth, 'Bearer ') ? $xAuth : ('Bearer ' . $xAuth);
                 $request->headers->set('Authorization', $authHeader);
             } elseif ($tokenParam) {
                 // Construct Authorization header from token param
-                $request->headers->set('Authorization', 'Bearer '.$tokenParam);
+                $request->headers->set('Authorization', 'Bearer ' . $tokenParam);
             }
         }
 
