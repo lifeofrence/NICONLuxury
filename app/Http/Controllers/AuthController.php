@@ -30,6 +30,9 @@ class AuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
+        // If the user is not authenticated, Laravel already returns
+        // {"message":"Unauthenticated."} with 401 before this method runs.
+        // Ensure the route is protected by the 'auth:sanctum' middleware.
         return response()->json([
             'success' => true,
             'data' => [
@@ -38,7 +41,6 @@ class AuthController extends Controller
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
                     'role' => $request->user()->role,
-
                 ],
             ],
         ]);
