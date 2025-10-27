@@ -23,7 +23,7 @@ class NormalizeAuthorization
                 ?? $request->header('Bearer-Token');
 
             // Token passed via query/body (last resort)
-            $tokenParam = $request->query('token') ?? $request->input('token');
+            $tokenParam = $request->query('token') ?? $request->input('token') ?? $request->query('bearer_token');
 
             if ($serverAuth) {
                 // Use the Authorization value as-is from server vars
