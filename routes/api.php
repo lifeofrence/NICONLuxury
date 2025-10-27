@@ -9,16 +9,41 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\RoomTypeImageController;
 
+
 // Debug route - remove after testing
-Route::get('/debug/headers', function (Request $request) {
+Route::get('/debug/auth', function () {
+    $request = request();
     return response()->json([
+        'has_auth_header' => $request->hasHeader('Authorization'),
+        'auth_header' => $request->header('Authorization'),
+        'bearer_token' => $request->bearerToken(),
         'all_headers' => $request->headers->all(),
-        'authorization' => $request->header('Authorization'),
-        'server_auth' => $request->server('HTTP_AUTHORIZATION'),
-        'redirect_auth' => $request->server('REDIRECT_HTTP_AUTHORIZATION'),
-        'php_auth_user' => $request->server('PHP_AUTH_USER'),
-        'php_auth_pw' => $request->server('PHP_AUTH_PW'),
     ]);
+});
+
+// Cache clear route - remove after testing
+Route::get('/debug/clear-cache', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('config:clear');
+        \Illuminate\Support\Facades\Artisan::call('cache:clear');
+        \Illuminate\Support\Facades\Artisan::call('route:clear');
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Cache cleared successfully',
+            'commands_run' => ['config:clear', 'cache:clear', 'route:clear']
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
+});
+
+// Simple test route
+Route::get('/test', function () {
+    return response()->json(['message' => 'API is working', 'time' => now()]);
 });
 
 // Public routes
