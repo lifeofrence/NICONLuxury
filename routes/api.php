@@ -12,13 +12,28 @@ use App\Http\Controllers\RoomTypeImageController;
 
 
 
-// Quick debug - remove after testing
-Route::get('/debug/token', function () {
+
+
+// Token diagnostic - remove after testing
+Route::get('/debug/sanctum', function () {
     $request = request();
+    $token = $request->bearerToken();
+
+    if (!$token) {
+        return response()->json(['error' => 'No bearer token found']);
+    }
+
+    // Check if token exists in database
+    $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+
     return response()->json([
-        'auth_header' => $request->header('Authorization'),
-        'bearer_token' => $request->bearerToken(),
-        'x_auth_token' => $request->header('X-Auth-Token'),
+        'token_provided' => $token,
+        'token_exists' => $accessToken ? true : false,
+        'token_id' => $accessToken ? $accessToken->id : null,
+        'token_name' => $accessToken ? $accessToken->name : null,
+        'user_id' => $accessToken ? $accessToken->tokenable_id : null,
+        'created_at' => $accessToken ? $accessToken->created_at : null,
+        'last_used_at' => $accessToken ? $accessToken->last_used_at : null,
     ]);
 });
 
