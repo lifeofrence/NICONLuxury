@@ -18,6 +18,13 @@ Route::get('/debug/auth', function () {
         'auth_header' => $request->header('Authorization'),
         'bearer_token' => $request->bearerToken(),
         'all_headers' => $request->headers->all(),
+        'server_vars' => [
+            'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
+            'REDIRECT_HTTP_AUTHORIZATION' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
+            'PHP_AUTH_USER' => $_SERVER['PHP_AUTH_USER'] ?? null,
+            'PHP_AUTH_PW' => $_SERVER['PHP_AUTH_PW'] ?? null,
+            'REMOTE_USER' => $_SERVER['REMOTE_USER'] ?? null,
+        ],
     ]);
 });
 
@@ -27,7 +34,7 @@ Route::get('/debug/clear-cache', function () {
         \Illuminate\Support\Facades\Artisan::call('config:clear');
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
         \Illuminate\Support\Facades\Artisan::call('route:clear');
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Cache cleared successfully',

@@ -8,13 +8,20 @@
     # Handle Authorization Header - Multiple methods for compatibility
     RewriteCond %{HTTP:Authorization} ^(.*)
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
-    
+
     # Alternative Authorization header handling
     RewriteCond %{HTTP:Authorization} .+
     RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     
     # Set environment variable for Authorization header
     SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    
+    # Additional methods for stubborn servers
+    RewriteCond %{HTTP:Authorization} ^(.+)$
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    
+    # Force Authorization header through CGI
+    RewriteRule .* - [E=REMOTE_USER:%{HTTP:Authorization}]
 
     # Handle X-XSRF-Token Header
     RewriteCond %{HTTP:x-xsrf-token} .
