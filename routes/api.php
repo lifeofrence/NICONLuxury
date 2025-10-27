@@ -9,6 +9,18 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\RoomTypeImageController;
 
+// Debug route - remove after testing
+Route::get('/debug/headers', function (Request $request) {
+    return response()->json([
+        'all_headers' => $request->headers->all(),
+        'authorization' => $request->header('Authorization'),
+        'server_auth' => $request->server('HTTP_AUTHORIZATION'),
+        'redirect_auth' => $request->server('REDIRECT_HTTP_AUTHORIZATION'),
+        'php_auth_user' => $request->server('PHP_AUTH_USER'),
+        'php_auth_pw' => $request->server('PHP_AUTH_PW'),
+    ]);
+});
+
 // Public routes
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::get('/rooms', [RoomTypeController::class, 'index']);
