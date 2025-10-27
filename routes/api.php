@@ -26,14 +26,22 @@ Route::get('/debug/sanctum', function () {
     // Check if token exists in database
     $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
 
+    // Try to get user through Sanctum
+    $user = null;
+    if ($accessToken) {
+        $user = $accessToken->tokenable;
+    }
+
     return response()->json([
         'token_provided' => $token,
         'token_exists' => $accessToken ? true : false,
         'token_id' => $accessToken ? $accessToken->id : null,
-        'token_name' => $accessToken ? $accessToken->name : null,
         'user_id' => $accessToken ? $accessToken->tokenable_id : null,
-        'created_at' => $accessToken ? $accessToken->created_at : null,
-        'last_used_at' => $accessToken ? $accessToken->last_used_at : null,
+        'user_found' => $user ? true : false,
+        'user_name' => $user ? $user->name : null,
+        'user_email' => $user ? $user->email : null,
+        'sanctum_guard_check' => auth('sanctum')->check(),
+        'sanctum_user' => auth('sanctum')->user() ? auth('sanctum')->user()->email : null,
     ]);
 });
 
