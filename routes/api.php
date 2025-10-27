@@ -10,47 +10,16 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\RoomTypeImageController;
 
 
-// Debug route - remove after testing
-Route::get('/debug/auth', function () {
+
+
+// Quick debug - remove after testing
+Route::get('/debug/token', function () {
     $request = request();
     return response()->json([
-        'has_auth_header' => $request->hasHeader('Authorization'),
         'auth_header' => $request->header('Authorization'),
         'bearer_token' => $request->bearerToken(),
-        'all_headers' => $request->headers->all(),
-        'server_vars' => [
-            'HTTP_AUTHORIZATION' => $_SERVER['HTTP_AUTHORIZATION'] ?? null,
-            'REDIRECT_HTTP_AUTHORIZATION' => $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null,
-            'PHP_AUTH_USER' => $_SERVER['PHP_AUTH_USER'] ?? null,
-            'PHP_AUTH_PW' => $_SERVER['PHP_AUTH_PW'] ?? null,
-            'REMOTE_USER' => $_SERVER['REMOTE_USER'] ?? null,
-        ],
+        'x_auth_token' => $request->header('X-Auth-Token'),
     ]);
-});
-
-// Cache clear route - remove after testing
-Route::get('/debug/clear-cache', function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('config:clear');
-        \Illuminate\Support\Facades\Artisan::call('cache:clear');
-        \Illuminate\Support\Facades\Artisan::call('route:clear');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cache cleared successfully',
-            'commands_run' => ['config:clear', 'cache:clear', 'route:clear']
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage()
-        ], 500);
-    }
-});
-
-// Simple test route
-Route::get('/test', function () {
-    return response()->json(['message' => 'API is working', 'time' => now()]);
 });
 
 // Public routes
