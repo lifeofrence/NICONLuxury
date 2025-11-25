@@ -7,15 +7,14 @@ return [
     // Allow all HTTP methods; tighten if you want to be explicit
     'allowed_methods' => ['*'],
 
-    // Comma-separated list of origins from .env; falls back to '*'
-    // Example: CORS_ALLOWED_ORIGINS="https://niconluxury.jubileesystem.com,https://admin.niconluxury.com,http://localhost:3000"
-    'allowed_origins' => (function () {
-        $origins = array_filter(array_map('trim', explode(',', env('CORS_ALLOWED_ORIGINS', ''))));
-        return !empty($origins) ? $origins : ['*'];
-    })(),
+    // Explicitly allow your backend and frontend origins
+    'allowed_origins' => [
+        'https://niconluxury.jubileesystem.com',
+        'https://nicon-luxury.vercel.app',
+    ],
 
     // Optional regex pattern from .env for subdomains (e.g., ^https:\/\/(.*\.)?niconluxury\.com$)
-    'allowed_origins_patterns' => array_filter([env('CORS_ALLOWED_ORIGINS_PATTERN', '')]),
+    'allowed_origins_patterns' => [],
 
     // Allow any headers; tighten if necessary
     'allowed_headers' => ['*'],
