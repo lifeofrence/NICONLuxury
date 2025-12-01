@@ -44,69 +44,86 @@ class BookingController extends Controller
     public function store(BookingStoreRequest $request)
     {
         $data = $request->validated();
-
+        
         return DB::transaction(function () use ($data) {
             $roomType = RoomType::findOrFail($data['room_type_id']);
-
-            // Pick a random physically available room for this type
-            $room = Room::query()
+            
+            $requestedCount = (int) ($data['number_of_rooms'] ?? 1);
+            
+            // Gather available rooms for the type
+            $availableRooms = Room::query()
                 ->where('room_type_id', $roomType->id)
                 ->where('status', 'Available')
                 ->inRandomOrder()
-                ->first();
+                ->limit($requestedCount)
+                ->get();
 
-            if (!$room) {
+            if ($availableRooms->count() < $requestedCount) {
                 return response()->json([
-                    'message' => 'No available rooms for selected room type.',
+                    'message' => 'Sorry, selected number of rooms are not available',
+                    'requested' => $requestedCount,
+                    'available' => $availableRooms->count(),
                 ], 422);
             }
 
             $nights = (new \DateTime($data['check_in_date']))->diff(new \DateTime($data['check_out_date']))->days;
-            $amount = $nights * $roomType->base_price;
+            $perRoomAmount = $nights * $roomType->base_price;
+            $totalAmount = $perRoomAmount * $requestedCount;
 
-            $booking = Booking::create([
-                'room_id' => $room->id,
-                'room_type_id' => $roomType->id,
-                'guest_name' => $data['guest_name'],
-                'guest_email' => $data['guest_email'],
-                'guest_phone' => $data['guest_phone'],
-                'check_in_date' => $data['check_in_date'],
-                'check_out_date' => $data['check_out_date'],
-                'status' => 'pending',
-                'amount' => $amount,
-            ]);
+            $createdBookings = [];
+            $assignedRoomsPayload = [];
 
-            // Mark the room as occupied immediately
-            $room->status = 'Occupied';
-            $room->save();
+            foreach ($availableRooms as $room) {
+                $booking = Booking::create([
+                    'room_id' => $room->id,
+                    'room_type_id' => $roomType->id,
+                    'guest_name' => $data['guest_name'],
+                    'guest_email' => $data['guest_email'],
+                    'guest_phone' => $data['guest_phone'],
+                    'check_in_date' => $data['check_in_date'],
+                    'check_out_date' => $data['check_out_date'],
+                    'status' => 'pending',
+                    'amount' => $perRoomAmount,
+                ]);
 
-            // Load relations for email and response payload
-            $bookingWithRelations = $booking->load('roomType', 'room');
+                // Mark the room as occupied immediately
+                $room->status = 'Occupied';
+                $room->save();
 
-            // Send emails to guest and admin
+                $createdBookings[] = $booking->load('roomType', 'room');
+                $assignedRoomsPayload[] = [
+                    'id' => $room->id,
+                    'room_number' => $room->room_number,
+                    'status' => $room->status,
+                ];
+            }
+
+            // Send emails (use the first booking to avoid multiple emails to the guest)
             try {
-                Mail::to($booking->guest_email)->send(new BookingConfirmed($bookingWithRelations));
+                $primaryBooking = $createdBookings[0];
+                Mail::to($primaryBooking->guest_email)->send(
+                    new BookingConfirmed($primaryBooking, $requestedCount, $assignedRoomsPayload, (float) $totalAmount)
+                );
                 $adminEmail = 'lifeofrence@gmail.com';
                 if ($adminEmail) {
-                    Mail::to($adminEmail)->send(new NewBookingNotification($bookingWithRelations));
+                    Mail::to($adminEmail)->send(new NewBookingNotification($primaryBooking));
                 }
             } catch (\Throwable $e) {
                 Log::error('Booking email send failed', [
-                    'booking_id' => $booking->id,
+                    'booking_id' => $createdBookings[0]->id ?? null,
                     'error' => $e->getMessage(),
                 ]);
             }
 
             return response()->json([
-                'message' => 'Booking created and room assigned. Proceed to payment initiation.',
-                'booking' => $bookingWithRelations,
-                'assigned_room' => [
-                    'id' => $room->id,
-                    'room_number' => $room->room_number,
-                    'status' => $room->status,
-                ],
-                'payment_initiate_endpoint' => '/api/payments/initiate',
-                'cancel_reservation' => '/api/bookings/cancel/' . $booking->id,
+                'message' => 'Bookings created and rooms assigned.',
+                'number_of_rooms' => $requestedCount,
+                'total_amount' => $totalAmount,
+                // For backward compatibility
+                'booking' => $createdBookings[0],
+                // New comprehensive payloads
+                'bookings' => $createdBookings,
+                'assigned_rooms' => $assignedRoomsPayload,
             ], 201);
         });
     }

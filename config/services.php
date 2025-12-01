@@ -43,6 +43,11 @@ return [
         'callback_url' => env('PAYSTACK_CALLBACK_URL', env('APP_URL').'/api/payments/confirm'),
     ],
 
+    // Frontend base URL used for redirects after user actions (e.g., payments)
+    'frontend' => [
+        'base_url' => env('FRONTEND_BASE_URL'),
+    ],
+
     // Cloudinary configuration
     'cloudinary' => [
         'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),

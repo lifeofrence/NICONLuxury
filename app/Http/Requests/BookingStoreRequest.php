@@ -20,6 +20,7 @@ class BookingStoreRequest extends FormRequest
             'room_type_id' => 'required|exists:room_types,id',
             'check_in_date' => 'required|date',
             'check_out_date' => 'required|date|after:check_in_date',
+            'number_of_rooms' => 'required|integer|min:1',
         ];
     }
 }

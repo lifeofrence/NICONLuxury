@@ -1,30 +1,46 @@
 <?php
 
 return [
-    // Apply CORS only to API endpoints (adjust if you have other routes)
-    'paths' => ['api/*'],
+    // Apply CORS to API endpoints and Sanctum CSRF route (if used)
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     // Allow all HTTP methods; tighten if you want to be explicit
-    'allowed_methods' => ['*'],
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    // Explicitly allow your backend and frontend origins
-    'allowed_origins' => [
-        'https://niconluxury.jubileesystem.com',
-        'https://nicon-luxury.vercel.app',
-    ],
+    // Allow origins driven by env with sensible fallbacks
+    // Example env: CORS_ALLOWED_ORIGINS="https://nicon-luxury.vercel.app,http://localhost:3000"
+    'allowed_origins' => (function () {
+        $envOrigins = env('CORS_ALLOWED_ORIGINS', '');
+        $list = array_filter(array_map('trim', explode(',', $envOrigins)));
 
-    // Optional regex pattern from .env for subdomains (e.g., ^https:\/\/(.*\.)?niconluxury\.com$)
-    'allowed_origins_patterns' => [],
+        // Fallbacks for production and local dev
+        if (empty($list)) {
+            $list = [
+                'https://nicon-luxury.vercel.app',
+                'http://localhost:3000',
+                'http://127.0.0.1:3000',
+            ];
+        }
+        return $list;
+    })(),
 
-    // Allow any headers; tighten if necessary
-    'allowed_headers' => ['*'],
+    // Optional regex patterns for dynamic preview domains (e.g., Vercel previews)
+    // Example env: CORS_ALLOWED_ORIGINS_PATTERNS="~^https://nicon-luxury-.*\\.vercel\\.app$~"
+    'allowed_origins_patterns' => (function () {
+        $envPatterns = env('CORS_ALLOWED_ORIGINS_PATTERNS', '');
+        $list = array_filter(array_map('trim', explode(',', $envPatterns)));
+        return $list;
+    })(),
 
-    // Headers exposed to the browser (Authorization is commonly safe to expose)
-    'exposed_headers' => ['Authorization'],
+    // Allow common headers needed for APIs
+    'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Accept', 'Origin'],
 
-    // Preflight cache age in seconds
-    'max_age' => 0,
+    // Headers exposed to the browser
+    'exposed_headers' => ['Authorization', 'Location'],
 
-    // Only set to true if you are using cookie-based auth from a browser (Sanctum SPA)
+    // Cache preflight for an hour
+    'max_age' => 3600,
+
+    // Enable only if using cookie-based auth (Sanctum SPA) and front-end sends credentials
     'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', false),
 ];
