@@ -119,17 +119,6 @@ class PaymentController extends Controller
                 ]);
             }
 
-            // If the callback was initiated by the user's browser, redirect to frontend page to show details
-            $frontend = rtrim((string) env('FRONTEND_BASE_URL', ''), '/');
-            if ($frontend && !$request->wantsJson()) {
-                $qs = http_build_query([
-                    'status' => 'success',
-                    'reference' => $data['payment_reference'],
-                    'booking_id' => $booking->id,
-                ]);
-                return redirect()->away($frontend.'/payment/callback?'.$qs);
-            }
-
             return response()->json([
                 'message' => 'Payment confirmed.',
                 'bookings' => $bookingWithRelations,
@@ -146,17 +135,6 @@ class PaymentController extends Controller
             }
             $booking->status = 'pending';
             $booking->save();
-
-            // If the callback was initiated by the user's browser, redirect to frontend page to show pending status
-            $frontend = rtrim((string) env('FRONTEND_BASE_URL', ''), '/');
-            if ($frontend && !$request->wantsJson()) {
-                $qs = http_build_query([
-                    'status' => $dataStatus,
-                    'reference' => $data['payment_reference'],
-                    'booking_id' => $booking->id,
-                ]);
-                return redirect()->away($frontend.'/payment/callback?'.$qs);
-            }
 
             return response()->json([
                 'message' => 'Payment not completed (' . $dataStatus . '). Booking remains pending.',
@@ -176,17 +154,6 @@ class PaymentController extends Controller
                 $room->status = 'Available';
                 $room->save();
             }
-        }
-
-        // If the callback was initiated by the user's browser, redirect to frontend page to show failure
-        $frontend = rtrim((string) env('FRONTEND_BASE_URL', ''), '/');
-        if ($frontend && !$request->wantsJson()) {
-            $qs = http_build_query([
-                'status' => 'failed',
-                'reference' => $data['payment_reference'],
-                'booking_id' => $booking->id,
-            ]);
-            return redirect()->away($frontend.'/payment/callback?'.$qs);
         }
 
         return response()->json([

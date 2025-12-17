@@ -71,12 +71,15 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('/admin/physical-rooms/{id}', [RoomController::class, 'update'])->whereNumber('id');
     Route::delete('/admin/physical-rooms/{id}', [RoomController::class, 'destroy'])->whereNumber('id');
 
-    // bookings admin
+    // Bookings
     Route::get('/admin/bookings', [BookingController::class, 'index']);
     Route::get('/admin/bookings/{id}', [BookingController::class, 'show'])->whereNumber('id');
     Route::put('/admin/bookings/{id}', [BookingController::class, 'update'])->whereNumber('id');
+    Route::delete('/admin/bookings/{id}', [BookingController::class, 'destroy'])->whereNumber('id');
+    Route::post('/admin/bookings/{id}/checkout', [BookingController::class, 'checkout'])->whereNumber('id');
+    Route::post('/admin/bookings/{id}/send-email', [BookingController::class, 'sendEmail'])->whereNumber('id');
 
-    // analytics
+    // Analyticsype images
     Route::get('/admin/analytics', [AnalyticsController::class, 'index']);
 
     // room type images
@@ -85,4 +88,24 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         ->whereNumber('roomTypeId')
         ->whereNumber('imageId');
     Route::delete('/admin/room-types/{roomTypeId}/images/{imageId}', [RoomTypeImageController::class, 'destroy'])->whereNumber('roomTypeId')->whereNumber('imageId');
+
+    // gallery management
+    Route::get('/admin/gallery', [\App\Http\Controllers\GalleryController::class, 'index']);
+    Route::post('/admin/gallery', [\App\Http\Controllers\GalleryController::class, 'store']);
+    Route::put('/admin/gallery/{id}', [\App\Http\Controllers\GalleryController::class, 'update'])->whereNumber('id');
+    Route::delete('/admin/gallery/{id}', [\App\Http\Controllers\GalleryController::class, 'destroy'])->whereNumber('id');
+
+    // offers management
+    Route::get('/admin/offers', [\App\Http\Controllers\OfferController::class, 'index']);
+    Route::post('/admin/offers', [\App\Http\Controllers\OfferController::class, 'store']);
+    Route::put('/admin/offers/{id}', [\App\Http\Controllers\OfferController::class, 'update'])->whereNumber('id');
+    Route::delete('/admin/offers/{id}', [\App\Http\Controllers\OfferController::class, 'destroy'])->whereNumber('id');
+
+    // rooms management
+    Route::put('/admin/physical-rooms/{id}', [\App\Http\Controllers\RoomController::class, 'update'])->whereNumber('id');
+
+    // settings
+    Route::get('/admin/settings', [\App\Http\Controllers\SettingController::class, 'index']);
+    Route::put('/admin/settings', [\App\Http\Controllers\SettingController::class, 'update']);
 });
+

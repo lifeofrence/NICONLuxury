@@ -1,0 +1,24 @@
+    public function checkout(int $id)
+    {
+        $booking = Booking::with('room')->findOrFail($id);
+
+        // Can only checkout confirmed bookings
+        if ($booking->status !== 'confirmed') {
+            return response()->json([
+                'message' => 'Only confirmed bookings can be checked out'
+            ], 400);
+        }
+
+        // Update booking status
+        $booking->update(['status' => 'checked-out']);
+
+        // Mark room as available if assigned
+        if ($booking->room) {
+            $booking->room->update(['status' => 'Available']);
+        }
+
+        return response()->json([
+            'message' => 'Guest checked out successfully',
+            'booking' => $booking
+        ]);
+    }

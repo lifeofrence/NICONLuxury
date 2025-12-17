@@ -20,7 +20,7 @@ class NewBookingNotification extends Mailable
 
     public function build()
     {
-        return $this->subject('New booking notification')
+        return $this->subject('New booking notification for customer')
             ->view('emails.new_booking_notification')
             ->with([
                 'booking' => $this->booking,

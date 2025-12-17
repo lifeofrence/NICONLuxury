@@ -68,37 +68,15 @@
 
             <div class="row">
                 <div class="col">
-                    
+                    <div class="card">
                         <span class="card-title">Rooms Booked</span>
-                        <div class="card">
-             
-                <ul class="list">
-                    <li>{{ optional($booking->roomType)->name }} </li>
-                    @if(!empty($assigned_rooms) && is_array($assigned_rooms) && count($assigned_rooms) > 0)
-                        <li>Rooms Booked: {{ $number_of_rooms ?? 1 }}</li>
-                        <li>Assigned Rooms:</li>
-                        @foreach($assigned_rooms as $r)
-                            <li>• Room {{ $r['room_number'] }}</li>
-                        @endforeach
-                    @endif
-                      @php
-                        $checkInDateObj = $booking->check_in_date instanceof \Carbon\Carbon
-                          ? $booking->check_in_date->copy()->setTime(12, 0)
-                          : \Carbon\Carbon::parse($booking->check_in_date)->setTime(12, 0);
-                        $checkOutDateObj = $booking->check_out_date instanceof \Carbon\Carbon
-                          ? $booking->check_out_date->copy()->setTime(12, 0)
-                          : \Carbon\Carbon::parse($booking->check_out_date)->setTime(12, 0);
-                      @endphp
-                      <li>Check‑in Date: {{ $checkInDateObj->format('d/m/Y \a\t h:i A') }}</li>
-                      <li>Check‑out Date: {{ $checkOutDateObj->format('d/m/Y \a\t h:i A') }}</li>
-                </ul>
-                <div class="total-wrap">
-                    <div class="total">
-                        <span>Total : </span>
-                        <span>NGN {{ number_format((float) ($total_amount ?? $booking->amount), 0) }}</span>
-                    </div>
-                </div>
-          
+                        <ul class="list">
+                            <li>{{ optional($booking->roomType)->name ?? 'Room' }}</li>
+                               <li>Check‑in Date: {{ $booking->check_in_date instanceof \Carbon\Carbon ? $booking->check_in_date->format('d/m/Y H:i') : $booking->check_in_date }}</li>
+                            <li>Check‑out Date: {{ $booking->check_out_date instanceof \Carbon\Carbon ? $booking->check_out_date->format('d/m/Y H:i') : $booking->check_out_date }}</li>
+                                     <li>{{ optional($booking->roomType)->name }} — {{ optional($booking->room)->room_number ? 'Room ' . $booking->room->room_number : 'Assigned at check‑in' }}</li>
+                                     <li>  Total Amount:  <span>NGN {{ number_format((float) $booking->amount, 0) }}</span> </li>
+                        </ul>
                     </div>
                 </div>
               

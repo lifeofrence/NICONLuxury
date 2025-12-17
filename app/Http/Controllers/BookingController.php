@@ -18,7 +18,7 @@ class BookingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Booking::query()->with('roomType');
+        $query = Booking::query()->with(['roomType', 'room']);
 
         if ($status = $request->query('status')) {
             $query->where('status', $status);
@@ -35,7 +35,7 @@ class BookingController extends Controller
         return response()->json($query->orderByDesc('id')->paginate(20));
     }
 
-      public function show(int $id)
+    public function show(int $id)
     {
         $booking = Booking::with(['roomType.images', 'room'])->findOrFail($id);
         return response()->json($booking);
@@ -44,12 +44,12 @@ class BookingController extends Controller
     public function store(BookingStoreRequest $request)
     {
         $data = $request->validated();
-        
+
         return DB::transaction(function () use ($data) {
             $roomType = RoomType::findOrFail($data['room_type_id']);
-            
+
             $requestedCount = (int) ($data['number_of_rooms'] ?? 1);
-            
+
             // Gather available rooms for the type
             $availableRooms = Room::query()
                 ->where('room_type_id', $roomType->id)
@@ -155,12 +155,12 @@ class BookingController extends Controller
         return response()->json($booking);
     }
 
-      public function cancelled(Request $request, int $id)
+    public function cancelled(Request $request, int $id)
     {
         $booking = Booking::findOrFail($id);
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,cancelled',
-            
+
         ]);
         $booking->update($validated);
 
@@ -188,9 +188,11 @@ class BookingController extends Controller
         $checkOut = $validated['check_out_date'];
         $roomTypeId = $validated['room_type_id'] ?? null;
 
-        $query = RoomType::query()->withCount(['rooms' => function ($q) {
-            $q->where('status', 'Available');
-        }]);
+        $query = RoomType::query()->withCount([
+            'rooms' => function ($q) {
+                $q->where('status', 'Available');
+            }
+        ]);
         if ($roomTypeId) {
             $query->where('id', $roomTypeId);
         }
@@ -227,5 +229,58 @@ class BookingController extends Controller
         }
 
         return response()->json($availableTypes);
+    }
+
+    public function checkout(int $id)
+    {
+        $booking = Booking::with('room')->findOrFail($id);
+
+        // Can only checkout confirmed bookings
+        if ($booking->status !== 'confirmed') {
+            return response()->json([
+                'message' => 'Only confirmed bookings can be checked out'
+            ], 400);
+        }
+
+        // Update booking status
+        $booking->update(['status' => 'checked-out']);
+
+        // Mark room as available if assigned
+        if ($booking->room) {
+            $booking->room->update(['status' => 'Available']);
+        }
+
+        return response()->json([
+            'message' => 'Guest checked out successfully',
+            'booking' => $booking
+        ]);
+    }
+
+    public function sendEmail(Request $request, int $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        try {
+            \Mail::to($booking->guest_email)->send(
+                new \App\Mail\CustomGuestEmail(
+                    $validated['subject'],
+                    $validated['message'],
+                    $booking->guest_name
+                )
+            );
+
+            return response()->json([
+                'message' => 'Email sent successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to send email: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
