@@ -16,7 +16,7 @@ return [
         // Fallbacks for production and local dev
         if (empty($list)) {
             $list = [
-                'https://frontd-nicon-luxury.vercel.app',
+            
                 'http://localhost:3000',
                 'http://127.0.0.1:3000',
                 'https://niconluxury.jubileesystem.com',
