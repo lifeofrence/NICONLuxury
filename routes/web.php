@@ -18,3 +18,9 @@ Route::get('/status', function () {
 // Public booking details page
 Route::get('/bookings/{id}', [BookingController::class, 'publicShow'])->whereNumber('id')->name('booking.show');
 Route::post('/bookings/{id}/cancel', [BookingController::class, 'publicCancel'])->whereNumber('id')->name('booking.cancel');
+
+// Handle GET requests to cancel route (redirect to booking page)
+Route::get('/bookings/{id}/cancel', function ($id) {
+    return redirect()->route('booking.show', $id)
+        ->with('error', 'To cancel your booking, please use the "Cancel Booking" button on the booking details page.');
+})->whereNumber('id');
