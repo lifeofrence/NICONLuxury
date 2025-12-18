@@ -159,15 +159,13 @@
                     <div class="card">
                         <span class="card-title">Your Booking</span>
                         <ul class="list">
-                            @if(isset($number_of_rooms) && $number_of_rooms > 1)
-                                <li>Booking Numbers: NLA{{ $booking->id }}
-                                    @if(isset($assigned_rooms) && count($assigned_rooms) > 1)
-                                        @for($i = 1; $i < $number_of_rooms; $i++)
-                                            , NLA{{ $booking->id + $i }}
-                                        @endfor
-                                    @endif
+                            @if(isset($all_bookings) && count($all_bookings) > 1)
+                                <li>Booking Numbers:
+                                    @foreach($all_bookings as $index => $b)
+                                        NLA{{ $b->id }}{{ $index < count($all_bookings) - 1 ? ', ' : '' }}
+                                    @endforeach
                                 </li>
-                                <li>Total Rooms Booked: {{ $number_of_rooms }}</li>
+                                <li>Total Rooms Booked: {{ $number_of_rooms ?? count($all_bookings) }}</li>
                             @else
                                 <li>Booking Number: NLA{{ $booking->id }}</li>
                             @endif
@@ -199,10 +197,10 @@
                     <li>{{ optional($booking->roomType)->name }} </li>
                     @if(!empty($assigned_rooms) && is_array($assigned_rooms) && count($assigned_rooms) > 0)
                         <li>Rooms Booked: {{ $number_of_rooms ?? 1 }}</li>
-                        <!-- <li><strong>Assigned Rooms:</strong></li>
-                            @foreach($assigned_rooms as $r)
-                                <li style="margin-left: 15px;">• Room {{ $r['room_number'] }}</li>
-                            @endforeach -->
+                        <li><strong>Assigned Rooms:</strong></li>
+                        @foreach($assigned_rooms as $r)
+                            <li style="margin-left: 15px;">• Room {{ $r['room_number'] }}</li>
+                        @endforeach
                     @endif
                     @php
                         $checkInDateObj = $booking->check_in_date instanceof \Carbon\Carbon
@@ -211,9 +209,11 @@
                         $checkOutDateObj = $booking->check_out_date instanceof \Carbon\Carbon
                             ? $booking->check_out_date->copy()->setTime(12, 0)
                             : \Carbon\Carbon::parse($booking->check_out_date)->setTime(12, 0);
+                        $nights = $checkInDateObj->diffInDays($checkOutDateObj);
                       @endphp
                     <li>Check‑in Date: {{ $checkInDateObj->format('d/m/Y \a\t h:i A') }}</li>
                     <li>Check‑out Date: {{ $checkOutDateObj->format('d/m/Y \a\t h:i A') }}</li>
+                    <li><strong>Number of Nights: {{ $nights }}</strong></li>
                 </ul>
                 <div class="total-wrap">
                     <div class="total">

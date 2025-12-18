@@ -124,9 +124,18 @@ class BookingController extends Controller
                 ], 422);
             }
 
+
             $nights = (new \DateTime($data['check_in_date']))->diff(new \DateTime($data['check_out_date']))->days;
             $perRoomAmount = $nights * $roomType->base_price;
             $totalAmount = $perRoomAmount * $requestedCount;
+
+            Log::info('Amount calculation', [
+                'nights' => $nights,
+                'base_price' => $roomType->base_price,
+                'per_room_amount' => $perRoomAmount,
+                'requested_count' => $requestedCount,
+                'total_amount' => $totalAmount,
+            ]);
 
             $createdBookings = [];
             $assignedRoomsPayload = [];
@@ -171,7 +180,13 @@ class BookingController extends Controller
             try {
                 $primaryBooking = $createdBookings[0];
                 Mail::to($primaryBooking->guest_email)->send(
-                    new BookingConfirmed($primaryBooking, $requestedCount, $assignedRoomsPayload, (float) $totalAmount)
+                    new BookingConfirmed(
+                        $primaryBooking,
+                        $requestedCount,
+                        $assignedRoomsPayload,
+                        (float) $totalAmount,
+                        $createdBookings  // Pass all bookings
+                    )
                 );
                 $adminEmail = 'lifeofrence@gmail.com';
                 if ($adminEmail) {

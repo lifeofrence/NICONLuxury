@@ -81,8 +81,18 @@
                         <span class="card-title">Rooms Booked</span>
                         <ul class="list">
                             <li>{{ optional($booking->roomType)->name ?? 'Room' }}</li>
-                            <li>Check‑in Date: {{ $booking->check_in_date instanceof \Carbon\Carbon ? $booking->check_in_date->format('d/m/Y H:i') : $booking->check_in_date }}</li>
-                            <li>Check‑out Date: {{ $booking->check_out_date instanceof \Carbon\Carbon ? $booking->check_out_date->format('d/m/Y H:i') : $booking->check_out_date }}</li>
+                            @php
+                                $checkInDateObj = $booking->check_in_date instanceof \Carbon\Carbon
+                                    ? $booking->check_in_date
+                                    : \Carbon\Carbon::parse($booking->check_in_date);
+                                $checkOutDateObj = $booking->check_out_date instanceof \Carbon\Carbon
+                                    ? $booking->check_out_date
+                                    : \Carbon\Carbon::parse($booking->check_out_date);
+                                $nights = $checkInDateObj->diffInDays($checkOutDateObj);
+                            @endphp
+                            <li>Check‑in Date: {{ $checkInDateObj->format('d/m/Y H:i') }}</li>
+                            <li>Check‑out Date: {{ $checkOutDateObj->format('d/m/Y H:i') }}</li>
+                            <li><strong>Number of Nights: {{ $nights }}</strong></li>
                             
                             @if(isset($assigned_rooms) && is_array($assigned_rooms) && count($assigned_rooms) > 0)
                                 <li><strong>Assigned Rooms:</strong></li>
