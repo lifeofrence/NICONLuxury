@@ -159,8 +159,18 @@
                     <div class="card">
                         <span class="card-title">Your Booking</span>
                         <ul class="list">
-                            <li>Booking Number: NLA{{ $booking->id }}</li>
-                            {{-- <li>Confirmation Number: {{ $booking->id }}</li> --}}
+                            @if(isset($number_of_rooms) && $number_of_rooms > 1)
+                                <li>Booking Numbers: NLA{{ $booking->id }}
+                                    @if(isset($assigned_rooms) && count($assigned_rooms) > 1)
+                                        @for($i = 1; $i < $number_of_rooms; $i++)
+                                            , NLA{{ $booking->id + $i }}
+                                        @endfor
+                                    @endif
+                                </li>
+                                <li>Total Rooms Booked: {{ $number_of_rooms }}</li>
+                            @else
+                                <li>Booking Number: NLA{{ $booking->id }}</li>
+                            @endif
                             <li>Booking Status: {{ ucfirst($booking->status) }}</li>
                             <li>Booking Date: {{ optional($booking->created_at)->format('d/m/Y H:i') }}</li>
                         </ul>
@@ -189,9 +199,9 @@
                     <li>{{ optional($booking->roomType)->name }} </li>
                     @if(!empty($assigned_rooms) && is_array($assigned_rooms) && count($assigned_rooms) > 0)
                         <li>Rooms Booked: {{ $number_of_rooms ?? 1 }}</li>
-                        <!-- <li>Assigned Rooms:</li>
+                        <!-- <li><strong>Assigned Rooms:</strong></li>
                             @foreach($assigned_rooms as $r)
-                                <li>• Room {{ $r['room_number'] }}</li>
+                                <li style="margin-left: 15px;">• Room {{ $r['room_number'] }}</li>
                             @endforeach -->
                     @endif
                     @php

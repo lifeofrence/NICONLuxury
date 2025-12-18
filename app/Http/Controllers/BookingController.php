@@ -175,7 +175,15 @@ class BookingController extends Controller
                 );
                 $adminEmail = 'lifeofrence@gmail.com';
                 if ($adminEmail) {
-                    Mail::to($adminEmail)->send(new NewBookingNotification($primaryBooking));
+                    Mail::to($adminEmail)->send(
+                        new NewBookingNotification(
+                            $primaryBooking,
+                            $createdBookings,
+                            $requestedCount,
+                            $assignedRoomsPayload,
+                            (float) $totalAmount
+                        )
+                    );
                 }
             } catch (\Throwable $e) {
                 Log::error('Booking email send failed', [
