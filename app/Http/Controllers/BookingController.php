@@ -20,15 +20,60 @@ class BookingController extends Controller
     {
         $query = Booking::query()->with(['roomType', 'room']);
 
+        // Search by guest name (partial match, case-insensitive)
+        if ($name = $request->query('name')) {
+            $query->where('guest_name', 'LIKE', '%' . $name . '%');
+        }
+
+        // Search by guest phone (partial match)
+        if ($phone = $request->query('phone')) {
+            $query->where('guest_phone', 'LIKE', '%' . $phone . '%');
+        }
+
+        // Search by booking ID or NLA ID (supports both "123" and "NLA123" formats)
+        if ($bookingId = $request->query('booking_id')) {
+            // Remove "NLA" prefix if present to get the numeric ID
+            $numericId = preg_replace('/^NLA/i', '', $bookingId);
+            if (is_numeric($numericId)) {
+                $query->where('id', $numericId);
+            }
+        }
+
+        // Search by room number
+        if ($roomNumber = $request->query('room_number')) {
+            $query->whereHas('room', function ($q) use ($roomNumber) {
+                $q->where('room_number', 'LIKE', '%' . $roomNumber . '%');
+            });
+        }
+
+        // Search by room type (partial match on room type name)
+        if ($roomType = $request->query('room_type')) {
+            $query->whereHas('roomType', function ($q) use ($roomType) {
+                $q->where('name', 'LIKE', '%' . $roomType . '%');
+            });
+        }
+
+        // Filter by status
         if ($status = $request->query('status')) {
             $query->where('status', $status);
         }
 
-        if ($checkIn = $request->query('check_in_date')) {
+        // Filter by check-in date (exact match or range)
+        if ($checkInDate = $request->query('check_in_date')) {
+            $query->whereDate('check_in_date', $checkInDate);
+        }
+
+        // Filter by check-out date (exact match or range)
+        if ($checkOutDate = $request->query('check_out_date')) {
+            $query->whereDate('check_out_date', $checkOutDate);
+        }
+
+        // Date range filter: bookings that overlap with the given date range
+        if ($checkIn = $request->query('check_in_from')) {
             $query->where('check_out_date', '>', $checkIn);
         }
 
-        if ($checkOut = $request->query('check_out_date')) {
+        if ($checkOut = $request->query('check_out_to')) {
             $query->where('check_in_date', '<', $checkOut);
         }
 
@@ -87,7 +132,7 @@ class BookingController extends Controller
                 ]);
 
                 // Mark the room as occupied immediately
-                $room->status = 'Occupied';
+                $room->status = 'Reserved';
                 $room->save();
 
                 $createdBookings[] = $booking->load('roomType', 'room');
