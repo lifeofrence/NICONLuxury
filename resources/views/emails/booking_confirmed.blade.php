@@ -197,10 +197,10 @@
                     <li>{{ optional($booking->roomType)->name }} </li>
                     @if(!empty($assigned_rooms) && is_array($assigned_rooms) && count($assigned_rooms) > 0)
                         <li>Rooms Booked: {{ $number_of_rooms ?? 1 }}</li>
-                        <li><strong>Assigned Rooms:</strong></li>
-                        @foreach($assigned_rooms as $r)
-                            <li style="margin-left: 15px;">• Room {{ $r['room_number'] }}</li>
-                        @endforeach
+                        <!-- <li><strong>Assigned Rooms:</strong></li>
+                            @foreach($assigned_rooms as $r)
+                                <li style="margin-left: 15px;">• Room {{ $r['room_number'] }}</li>
+                            @endforeach -->
                     @endif
                     @php
                         $checkInDateObj = $booking->check_in_date instanceof \Carbon\Carbon
