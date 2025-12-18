@@ -439,4 +439,51 @@ class BookingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Public booking details page (for guests)
+     */
+    public function publicShow(int $id)
+    {
+        $booking = Booking::with(['roomType.images', 'room'])->findOrFail($id);
+
+        // Calculate nights
+        $checkIn = $booking->check_in_date instanceof \Carbon\Carbon
+            ? $booking->check_in_date
+            : \Carbon\Carbon::parse($booking->check_in_date);
+        $checkOut = $booking->check_out_date instanceof \Carbon\Carbon
+            ? $booking->check_out_date
+            : \Carbon\Carbon::parse($booking->check_out_date);
+        $nights = $checkIn->diffInDays($checkOut);
+
+        return view('booking-details', [
+            'booking' => $booking,
+            'nights' => $nights
+        ]);
+    }
+
+    /**
+     * Public booking cancellation (for guests)
+     */
+    public function publicCancel(Request $request, int $id)
+    {
+        $booking = Booking::with('room')->findOrFail($id);
+
+        // Only allow cancellation of pending or confirmed bookings
+        if (!in_array($booking->status, ['pending', 'confirmed'])) {
+            return redirect()->route('booking.show', $id)
+                ->with('error', 'This booking cannot be cancelled.');
+        }
+
+        // Update booking status
+        $booking->update(['status' => 'cancelled']);
+
+        // Free up the room
+        if ($booking->room) {
+            $booking->room->update(['status' => 'Available']);
+        }
+
+        return redirect()->route('booking.show', $id)
+            ->with('success', 'Your booking has been cancelled successfully.');
+    }
 }
