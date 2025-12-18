@@ -95,6 +95,13 @@ class BookingController extends Controller
 
             $requestedCount = (int) ($data['number_of_rooms'] ?? 1);
 
+            // Debug logging
+            Log::info('Booking request received', [
+                'requested_count' => $requestedCount,
+                'room_type_id' => $data['room_type_id'],
+                'guest_name' => $data['guest_name'],
+            ]);
+
             // Gather available rooms for the type
             $availableRooms = Room::query()
                 ->where('room_type_id', $roomType->id)
@@ -102,6 +109,12 @@ class BookingController extends Controller
                 ->inRandomOrder()
                 ->limit($requestedCount)
                 ->get();
+
+            Log::info('Available rooms found', [
+                'requested' => $requestedCount,
+                'found' => $availableRooms->count(),
+                'room_ids' => $availableRooms->pluck('id')->toArray(),
+            ]);
 
             if ($availableRooms->count() < $requestedCount) {
                 return response()->json([
@@ -131,6 +144,12 @@ class BookingController extends Controller
                     'amount' => $perRoomAmount,
                 ]);
 
+                Log::info('Booking created', [
+                    'booking_id' => $booking->id,
+                    'room_id' => $room->id,
+                    'room_number' => $room->room_number,
+                ]);
+
                 // Mark the room as occupied immediately
                 $room->status = 'Reserved';
                 $room->save();
@@ -142,6 +161,11 @@ class BookingController extends Controller
                     'status' => $room->status,
                 ];
             }
+
+            Log::info('All bookings created', [
+                'total_bookings' => count($createdBookings),
+                'booking_ids' => collect($createdBookings)->pluck('id')->toArray(),
+            ]);
 
             // Send emails (use the first booking to avoid multiple emails to the guest)
             try {
@@ -176,6 +200,8 @@ class BookingController extends Controller
     public function update(Request $request, int $id)
     {
         $booking = Booking::findOrFail($id);
+        $oldRoomId = $booking->room_id;
+
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,cancelled',
             'guest_name' => 'sometimes|string|max:255',
@@ -183,9 +209,37 @@ class BookingController extends Controller
             'guest_phone' => 'sometimes|string|max:20',
             'check_in_date' => 'sometimes|date',
             'check_out_date' => 'sometimes|date',
-            'room_id' => 'sometimes|exists:rooms,id',
+            'room_id' => 'sometimes|nullable|exists:rooms,id',
             'room_type_id' => 'sometimes|exists:room_types,id',
         ]);
+
+        // Handle room change
+        if (isset($validated['room_id']) && $validated['room_id'] !== $oldRoomId) {
+            // Free up old room if exists
+            if ($oldRoomId) {
+                $oldRoom = Room::find($oldRoomId);
+                if ($oldRoom) {
+                    $oldRoom->status = 'Available';
+                    $oldRoom->save();
+                }
+            }
+
+            // Reserve new room if provided
+            if ($validated['room_id']) {
+                $newRoom = Room::find($validated['room_id']);
+                if ($newRoom) {
+                    // Check if new room is available
+                    if ($newRoom->status !== 'Available') {
+                        return response()->json([
+                            'message' => 'Selected room is not available'
+                        ], 422);
+                    }
+                    $newRoom->status = $booking->status === 'confirmed' ? 'Occupied' : 'Reserved';
+                    $newRoom->save();
+                }
+            }
+        }
+
         $booking->update($validated);
 
         // If booking is cancelled, free up the assigned room
@@ -197,7 +251,41 @@ class BookingController extends Controller
             }
         }
 
-        return response()->json($booking);
+        // If booking is confirmed, update room status to Occupied
+        if (isset($validated['status']) && $validated['status'] === 'confirmed' && $booking->room_id) {
+            $room = Room::find($booking->room_id);
+            if ($room) {
+                $room->status = 'Occupied';
+                $room->save();
+            }
+        }
+
+        return response()->json($booking->load('room', 'roomType'));
+    }
+
+    public function confirm(int $id)
+    {
+        $booking = Booking::with('room')->findOrFail($id);
+
+        // Can only confirm pending bookings
+        if ($booking->status !== 'pending') {
+            return response()->json([
+                'message' => 'Only pending bookings can be confirmed'
+            ], 400);
+        }
+
+        // Update booking status to confirmed
+        $booking->update(['status' => 'confirmed']);
+
+        // Update room status to Occupied if assigned
+        if ($booking->room) {
+            $booking->room->update(['status' => 'Occupied']);
+        }
+
+        return response()->json([
+            'message' => 'Booking confirmed successfully',
+            'booking' => $booking->load('room', 'roomType')
+        ]);
     }
 
     public function cancelled(Request $request, int $id)

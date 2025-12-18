@@ -75,6 +75,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/bookings', [BookingController::class, 'index']);
     Route::get('/admin/bookings/{id}', [BookingController::class, 'show'])->whereNumber('id');
     Route::put('/admin/bookings/{id}', [BookingController::class, 'update'])->whereNumber('id');
+    Route::post('/admin/bookings/{id}/confirm', [BookingController::class, 'confirm'])->whereNumber('id');
     Route::delete('/admin/bookings/{id}', [BookingController::class, 'destroy'])->whereNumber('id');
     Route::post('/admin/bookings/{id}/checkout', [BookingController::class, 'checkout'])->whereNumber('id');
     Route::post('/admin/bookings/{id}/send-email', [BookingController::class, 'sendEmail'])->whereNumber('id');
